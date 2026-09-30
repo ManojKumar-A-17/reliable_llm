@@ -128,14 +128,14 @@ class KnowledgeBase:
             if not meta_p.exists():
                 log.info("No index yet at %s — starting empty", self.index_dir)
                 return
-            meta = json.loads(meta_p.read_text())
+            meta = json.loads(meta_p.read_text(encoding="utf-8"))
             self.documents = {
                 d["id"]: DocumentInfo(**d)
-                for d in json.loads((self.index_dir / "documents.json").read_text())
+                for d in json.loads((self.index_dir / "documents.json").read_text(encoding="utf-8"))
             }
             self.chunks = [
                 Chunk(**json.loads(line))
-                for line in (self.index_dir / "chunks.jsonl").read_text().splitlines() if line.strip()
+                for line in (self.index_dir / "chunks.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()
             ]
             emb_p = self.index_dir / "embeddings.npy"
             emb = np.load(emb_p) if emb_p.exists() else np.zeros((0, 0), dtype=np.float32)
@@ -158,15 +158,15 @@ class KnowledgeBase:
             tmp = self.index_dir / ".tmp"
             tmp.mkdir(exist_ok=True)
             (tmp / "documents.json").write_text(
-                json.dumps([d.to_dict() for d in self.documents.values()], indent=1))
+                json.dumps([d.to_dict() for d in self.documents.values()], indent=1), encoding="utf-8")
             (tmp / "chunks.jsonl").write_text(
-                "\n".join(json.dumps(c.to_dict(), ensure_ascii=False) for c in self.chunks))
+                "\n".join(json.dumps(c.to_dict(), ensure_ascii=False) for c in self.chunks), encoding="utf-8")
             np.save(tmp / "embeddings.npy", self._emb)
             (tmp / "meta.json").write_text(json.dumps({
                 "version": INDEX_VERSION,
                 "embedding_model": self.embedder.name,
                 "updated_at": datetime.now(timezone.utc).isoformat(),
-            }))
+            }), encoding="utf-8")
             for f in tmp.iterdir():                 # atomic-ish swap per file
                 f.replace(self.index_dir / f.name)
             tmp.rmdir()

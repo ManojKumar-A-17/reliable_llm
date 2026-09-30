@@ -10,7 +10,7 @@ Input (one JSON object per line):
     - "answerable" optional; false = the library should NOT answer it (tests abstention)
 
 Usage (from backend/, venv active, documents already uploaded):
-    python scripts/evaluate.py data/eval/questions.jsonl --mode thorough --out data/eval/results.json
+    python scripts/evaluate.py data/eval/sample_questions.jsonl --mode thorough --out data/eval/results.json
 """
 
 from __future__ import annotations
@@ -71,7 +71,8 @@ async def main():
     engine = Engine(kb, LLMRouter(build_providers(s), s.LLM_MAX_RETRIES, s.LLM_MAX_WAIT_SECS), emb,
                     HistoryStore(s.data_path / "rllm.db"), s)
 
-    items = [json.loads(l) for l in args.questions.read_text().splitlines() if l.strip()]
+    lines = args.questions.read_text(encoding="utf-8").splitlines()
+    items = [json.loads(l) for l in lines if l.strip()]
     rows = []
     for i, item in enumerate(items, 1):
         q = item["question"]
@@ -116,8 +117,9 @@ async def main():
     print("\n" + json.dumps(summary, indent=2))
     if args.out:
         args.out.parent.mkdir(parents=True, exist_ok=True)
-        args.out.write_text(json.dumps({"summary": summary, "rows": rows}, indent=2))
-        print(f"Saved → {args.out}")
+        args.out.write_text(json.dumps({"summary": summary, "rows": rows}, indent=2, ensure_ascii=False),
+                            encoding="utf-8")
+        print(f"Saved -> {args.out}")
 
 
 if __name__ == "__main__":
