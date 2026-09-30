@@ -1,0 +1,59 @@
+.bar {
+  height: 50px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 22px;
+}
+
+.logo {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--teal);
+  letter-spacing: 0.06em;
+}
+.logo em { color: var(--muted); font-style: normal; }
+
+.chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  padding: 3px 9px;
+  border-radius: 4px;
+  background: var(--teal-dim);
+  border: 1px solid var(--teal-glow);
+  color: var(--teal);
+}
+.chip.amber {
+  background: var(--amber-dim);
+  border-color: rgba(240, 167, 50, 0.35);
+  color: var(--amber);
+}
+
+.spacer { flex: 1; }
+
+.statusWrap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted2);
+  transition: background 0.3s, box-shadow 0.3s;
+}
+.dot.running { background: var(--green); box-shadow: 0 0 8px var(--green); }
+.dot.done    { background: var(--teal); }
+.dot.error   { background: var(--red); }
+
+.statusLabel {
+  font-size: 0.72rem;
+  color: var(--muted);
+  min-width: 42px;
+}

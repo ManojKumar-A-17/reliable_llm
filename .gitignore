@@ -1,0 +1,58 @@
+# ── Python ───────────────────────────────────────
+venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.so
+
+# ── Environment & secrets ────────────────────────
+.env
+.env.*
+!.env.example
+*.env
+
+# ── Jupyter ──────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ── ML / data artifacts ──────────────────────────
+models/
+logs/
+results/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+
+# ── Node / Frontend ──────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/rllm-frontend/
+node_modules/
+dist/
+
+# ── OS & editor ──────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/settings.json
+.idea/
+
+# ── Misc ─────────────────────────────────────────
+*.log
+*.tmp
+*.tar.gz
+rllm-frontend.tar.gz
+
+# ── v2 runtime data ──────────────────────────────
+backend/data/index/
+backend/data/uploads/
+backend/data/*.db
+backend/data/eval/results*.json
+_legacy/
+.pytest_cache/

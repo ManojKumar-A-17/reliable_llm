@@ -1,0 +1,6 @@
+{"question": "How is the Fact Verification Score calculated?", "expected": "verified claims divided by total claims", "answerable": true}
+{"question": "What is the default reliability threshold?", "expected": "0.70", "answerable": true}
+{"question": "Which weight is assigned to the Reasoning Score in the overall reliability score?", "expected": "0.20", "answerable": true}
+{"question": "How is the hallucination rate defined?", "expected": "unsupported claims divided by total claims times 100", "answerable": true}
+{"question": "Which GPU was used to train the model?", "answerable": false}
+{"question": "Who is the author of the paper?", "answerable": false}
