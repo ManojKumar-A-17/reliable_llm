@@ -4,7 +4,7 @@ LLM provider adapters.
 * :class:`GeminiProvider` talks to the native Gemini REST API (no SDK — the
   old ``google-generativeai`` package is deprecated). Native REST gives us
   control over thinking budget, safety settings and JSON output.
-* :class:`OpenAICompatProvider` covers Groq, OpenRouter and Ollama, which all
+* :class:`OpenAICompatProvider` covers Groq, OpenRouter and LM Studio, which all
   expose an OpenAI-style ``/chat/completions`` endpoint.
 
 Both support streaming via an ``on_token`` callback and raise
@@ -230,7 +230,7 @@ class GeminiProvider(Provider):
 
 
 # ════════════════════════════════════════════════════════════════════════════
-# OpenAI-compatible (Groq, OpenRouter, Ollama)
+# OpenAI-compatible (Groq, OpenRouter, LM Studio)
 # ════════════════════════════════════════════════════════════════════════════
 
 class OpenAICompatProvider(Provider):
@@ -238,9 +238,11 @@ class OpenAICompatProvider(Provider):
     def __init__(self, name: str, label: str, base_url: str, api_key: str,
                  models: Dict[str, str], rpm: Dict[str, int], timeout: float = 90.0,
                  extra_headers: Optional[Dict[str, str]] = None,
+                 max_concurrency: int = 0,
                  transport: Optional[httpx.AsyncBaseTransport] = None):
         super().__init__(models, rpm, timeout)
         self.name = name
+        self.max_concurrency = max_concurrency   # >0 = local server, queue calls (see LLMRouter)
         self.label = label
         self._base = base_url.rstrip("/")
         self._key = api_key
@@ -351,6 +353,66 @@ class OpenAICompatProvider(Provider):
         raise LLMError(kind, f"{self.label} {status}: {_error_message(body)}",
                        retry_after=self._retry_after(headers, body) if kind == RATE_LIMIT else None,
                        provider=self.name, model=model)
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# LM Studio (OpenAI-compatible, plus self-healing when its server is off)
+# ════════════════════════════════════════════════════════════════════════════
+
+def _lms_executable() -> Optional[str]:
+    import shutil
+    from pathlib import Path
+    found = shutil.which("lms")
+    if found:
+        return found
+    for name in ("lms.exe", "lms"):
+        p = Path.home() / ".lmstudio" / "bin" / name
+        if p.exists():
+            return str(p)
+    return None
+
+
+class LMStudioProvider(OpenAICompatProvider):
+    """LM Studio's local server stops whenever the app restarts. On a connection
+    failure, start it with the `lms` CLI, wait until it answers, and retry once."""
+
+    _RESTART_COOLDOWN = 30.0
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._last_restart = 0.0
+
+    async def complete(self, req: LLMRequest, model: str,
+                       on_token: Optional[TokenCallback] = None) -> LLMResponse:
+        try:
+            return await super().complete(req, model, on_token)
+        except LLMError as e:
+            if "unreachable" not in e.message or not await self._restart_server():
+                raise
+            return await super().complete(req, model, on_token)
+
+    async def _restart_server(self) -> bool:
+        import asyncio
+        import subprocess
+        now = time.monotonic()
+        lms = _lms_executable()
+        if not lms or now - self._last_restart < self._RESTART_COOLDOWN:
+            return False
+        self._last_restart = now
+        telemetry.notice("LM Studio server was off — starting it", level="wait", provider=self.name)
+        try:
+            await asyncio.to_thread(subprocess.run, [lms, "server", "start"], capture_output=True, timeout=60)
+        except Exception:
+            return False
+        for _ in range(30):                       # wait up to ~15 s for it to answer
+            try:
+                async with httpx.AsyncClient(timeout=2.0, transport=self._transport) as client:
+                    if (await client.get(f"{self._base}/models")).status_code == 200:
+                        return True
+            except httpx.HTTPError:
+                pass
+            await asyncio.sleep(0.5)
+        return False
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -565,5 +627,14 @@ def build_providers(settings) -> list[Provider]:
                 num_ctx=settings.OLLAMA_NUM_CTX, think=settings.OLLAMA_THINK,
                 max_tokens=settings.OLLAMA_MAX_TOKENS,
                 timeout=max(settings.LLM_TIMEOUT_SECS, 300),
+            ))
+        elif name == "lmstudio" and settings.LMSTUDIO_ENABLED:
+            out.append(LMStudioProvider(
+                "lmstudio", "LM Studio (local)", settings.LMSTUDIO_BASE_URL, "",
+                models={"strong": settings.LMSTUDIO_MODEL,
+                        "fast": settings.LMSTUDIO_FAST_MODEL or settings.LMSTUDIO_MODEL},
+                rpm={"strong": 0, "fast": 0},
+                timeout=max(settings.LLM_TIMEOUT_SECS, 300),
+                max_concurrency=1,
             ))
     return out

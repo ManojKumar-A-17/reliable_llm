@@ -1,0 +1,20 @@
+{"question": "What ratio is used to split the data into training and testing sets?", "expected": "75 25", "answerable": true}
+{"question": "Which model achieved the highest accuracy among the advanced techniques?", "expected": "CatBoost", "answerable": true}
+{"question": "What accuracy did the Random Forest classifier achieve?", "expected": "95.27", "answerable": true}
+{"question": "How many articles does the dataset contain?", "expected": "44,000", "answerable": true}
+{"question": "Which vectorization technique is used to convert the news text into features?", "expected": "TF-IDF", "answerable": true}
+{"question": "Which numeric labels are assigned to fake news and true news?", "expected": "0 fake 1 true", "answerable": true}
+{"question": "Which classifiers are combined in the hard-voting classifier?", "expected": "Logistic Regression Random Forest", "answerable": true}
+{"question": "What accuracy did the K-Nearest Neighbors model achieve?", "expected": "91.12", "answerable": true}
+{"question": "Which criterion is used to train the Decision Trees?", "expected": "entropy", "answerable": true}
+{"question": "What type of misclassification was most common for the CatBoost model?", "expected": "false negatives", "answerable": true}
+{"question": "Which model was the most computationally efficient?", "expected": "Logistic Regression", "answerable": true}
+{"question": "Which years do the news articles in the dataset span?", "expected": "2016 2022", "answerable": true}
+{"question": "What is the average length of the articles in the dataset?", "expected": "520 words", "answerable": true}
+{"question": "What accuracy did fine-tuned BERT models achieve in the study by Wang et al. (2020)?", "expected": "96.3", "answerable": true}
+{"question": "How many hidden layers does the MLPClassifier use?", "expected": "two", "answerable": true}
+{"question": "What learning rate was used to train the XGBoost model?", "answerable": false}
+{"question": "Which GPU was used to train the models?", "answerable": false}
+{"question": "What F1-score did the K-Nearest Neighbors model achieve?", "answerable": false}
+{"question": "Which organisation funded this research?", "answerable": false}
+{"question": "What is the capital of France?", "answerable": false}

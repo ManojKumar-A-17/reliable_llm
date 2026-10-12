@@ -117,3 +117,26 @@ def test_off_topic_question_declines_without_llm(settings, embedder):
         res = c.post("/api/query/sync", json={"question": "Recipe for sourdough pancakes"}).json()
     assert provider.calls == []
     assert res["answer"]["abstained"] and res["confidence"]["level"] == "ABSTAINED"
+
+
+def test_overview_question_uses_opening_passages(settings, embedder):
+    # Off-topic for the reranker, but clearly about the document as a whole.
+    provider = FakeProvider(answer="The document lists facts about the Sun, Mars and Jupiter [1].")
+    app = create_app(settings, embedder=embedder, reranker=_LowReranker(), providers=[provider])
+    with TestClient(app) as c:
+        c.post("/api/documents", files=[("files", ("space.md", DOC_MD, "text/markdown"))])
+        res = c.post("/api/query/sync", json={"question": "What is this file about?", "mode": "fast"}).json()
+    assert provider.calls == ["answer", "verify"]
+    assert not res["answer"]["abstained"] and res["sources"]
+    assert res["sources"][0]["text"].startswith("The Sun")      # opening passage of the document
+
+
+def test_decline_with_cited_context_counts_as_abstained(settings, embedder):
+    provider = FakeProvider(answer="The provided documents don't contain enough information to answer this. "
+                                   "They do describe the moons of Mars [1].")
+    app = create_app(settings, embedder=embedder, reranker=None, providers=[provider])
+    with TestClient(app) as c:
+        c.post("/api/documents", files=[("files", ("space.md", DOC_MD, "text/markdown"))])
+        res = c.post("/api/query/sync", json={"question": "What is the mass of Phobos?", "mode": "thorough"}).json()
+    assert res["answer"]["abstained"] and res["confidence"]["level"] == "ABSTAINED"
+    assert "verify" not in provider.calls and "reflect" not in provider.calls

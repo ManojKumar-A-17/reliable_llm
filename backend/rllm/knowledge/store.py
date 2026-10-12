@@ -253,6 +253,23 @@ class KnowledgeBase:
     def document_chunks(self, doc_id: str) -> List[dict]:
         return [c.to_dict() | {"label": c.label()} for c in self.chunks if c.doc_id == doc_id]
 
+    def overview_hits(self, top_k: int = 6, doc_ids: Optional[List[str]] = None) -> List[Hit]:
+        """Opening chunks of each document (title, abstract, introduction), taken
+        round-robin across documents — evidence for “what is this file about?”
+        questions, which match no single passage."""
+        with self._lock:
+            by_doc: Dict[str, List[Chunk]] = {}
+            for c in self.chunks:
+                if not doc_ids or c.doc_id in doc_ids:
+                    by_doc.setdefault(c.doc_id, []).append(c)
+        queues = [sorted(cs, key=lambda c: c.index) for cs in by_doc.values()]
+        picked: List[Chunk] = []
+        depth = 0
+        while len(picked) < top_k and any(depth < len(q) for q in queues):
+            picked.extend(q[depth] for q in queues if depth < len(q))
+            depth += 1
+        return [Hit(chunk=c, relevance=0.0, rank=r) for r, c in enumerate(picked[:top_k], start=1)]
+
     def stats(self) -> dict:
         return {
             "documents": len(self.documents),

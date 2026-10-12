@@ -1,0 +1,36 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 1450.05it/s]
+Loading weights:   0%|          | 0/105 [00:00<?, ?it/s]Loading weights: 100%|██████████| 105/105 [00:00<00:00, 1419.98it/s]
+[1/20] HIGH       0.90  122.8s  What ratio is used to split the data into training and testing sets?
+[2/20] HIGH       0.92   24.2s  Which model achieved the highest accuracy among the advanced technique
+[3/20] HIGH       1.00   17.7s  What accuracy did the Random Forest classifier achieve?
+[4/20] HIGH       0.99   16.5s  How many articles does the dataset contain?
+[5/20] MEDIUM     0.68   28.4s  Which vectorization technique is used to convert the news text into fe
+[6/20] HIGH       0.93   21.7s  Which numeric labels are assigned to fake news and true news?
+[7/20] HIGH       0.93   18.5s  Which classifiers are combined in the hard-voting classifier?
+[8/20] MEDIUM     0.70   17.8s  What accuracy did the K-Nearest Neighbors model achieve?
+[9/20] HIGH       0.94   17.0s  Which criterion is used to train the Decision Trees?
+[10/20] HIGH       0.98   23.8s  What type of misclassification was most common for the CatBoost model?
+[11/20] HIGH       0.94   22.6s  Which model was the most computationally efficient?
+[12/20] HIGH       0.97   21.9s  Which years do the news articles in the dataset span?
+[13/20] HIGH       1.00   15.4s  What is the average length of the articles in the dataset?
+[14/20] HIGH       0.96   22.7s  What accuracy did fine-tuned BERT models achieve in the study by Wang 
+[15/20] MEDIUM     0.71   13.5s  How many hidden layers does the MLPClassifier use?
+[16/20] LOW        0.55   16.2s  What learning rate was used to train the XGBoost model?
+[17/20] ABSTAINED  0.18    6.8s  Which GPU was used to train the models?
+[18/20] LOW        0.26   12.1s  What F1-score did the K-Nearest Neighbors model achieve?
+[19/20] ABSTAINED  0.01    9.3s  Which organisation funded this research?
+[20/20] ABSTAINED  0.00    3.5s  What is the capital of France?
+
+{
+  "n": 20,
+  "mode": "fast",
+  "mean_confidence": 0.7276,
+  "unsupported_claim_rate": 0.0769,
+  "abstention_rate": 0.15,
+  "mean_latency_s": 22.62,
+  "accuracy": 0.9333,
+  "ece": 0.0922,
+  "abstention_accuracy": 0.9
+}
+Saved -> data\eval\results_fast.json

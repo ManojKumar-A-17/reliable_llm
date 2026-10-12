@@ -112,7 +112,9 @@ async def generate_answer(router: LLMRouter, question: str, hits: List[Hit],
     invalid = sorted({c for c in cites if not 1 <= c <= len(hits)})
     return AnswerResult(
         text=resp.text, citations=valid, invalid_citations=invalid,
-        abstained=is_abstention(resp.text) and not valid,
+        # The prompt lets a decline add one cited sentence about what the sources
+        # do cover, so citations don't make it an answer.
+        abstained=is_abstention(resp.text),
         provider=resp.provider, model=resp.model, latency_ms=resp.latency_ms,
     )
 

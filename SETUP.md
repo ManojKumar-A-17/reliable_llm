@@ -179,6 +179,20 @@ GEMINI_API_KEY=your_key_here
 GEMINI_MODEL=<a model listed for your key in AI Studio>
 ```
 
+### Option D — LM Studio (fully local, no key)
+
+1. In LM Studio, download a model, then start the local server: **Developer** tab → **Start server**, or run `lms server start`.
+2. List the exact model names with `lms ls` (or open <http://localhost:1234/v1/models>).
+3. In `backend/.env`:
+   ```
+   LLM_PROVIDER_ORDER=lmstudio
+   LMSTUDIO_ENABLED=true
+   LMSTUDIO_BASE_URL=http://localhost:1234/v1
+   LMSTUDIO_MODEL=meta-llama-3.1-8b-instruct
+   LMSTUDIO_FAST_MODEL=llama-3.2-3b-instruct
+   ```
+   LM Studio loads a model automatically on its first request, so the first answer is slower.
+
 **Best of both:** `LLM_PROVIDER_ORDER=groq,ollama` uses Groq for speed and switches to Ollama when Groq is rate-limited or you're offline.
 
 > 🔒 **Keys go only in `backend/.env`** (git-ignored). Never put a real key in `.env.example` or any other tracked file, because GitHub will block the push.

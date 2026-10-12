@@ -24,6 +24,17 @@ class Embedder(Protocol):
     def encode(self, texts: List[str]) -> np.ndarray: ...
 
 
+def _load_cached_first(cls, name: str):
+    """Load from the local Hugging Face cache without touching the network;
+    download only when the model isn't cached yet. Otherwise every start-up
+    checks huggingface.co, which stalls for minutes on a slow or offline link."""
+    try:
+        return cls(name, device="cpu", local_files_only=True)
+    except Exception:
+        log.info("%s not in local cache — downloading", name)
+        return cls(name, device="cpu")
+
+
 class SentenceEmbedder:
     def __init__(self, model_name: str):
         self.name = model_name
@@ -35,7 +46,7 @@ class SentenceEmbedder:
             if self._model is None:
                 from sentence_transformers import SentenceTransformer
                 log.info("Loading embedding model %s …", self.name)
-                self._model = SentenceTransformer(self.name, device="cpu")
+                self._model = _load_cached_first(SentenceTransformer, self.name)
         return self._model
 
     def encode(self, texts: List[str]) -> np.ndarray:
@@ -91,7 +102,7 @@ class Reranker:
                 try:
                     from sentence_transformers import CrossEncoder
                     log.info("Loading reranker %s …", self.name)
-                    self._model = CrossEncoder(self.name, device="cpu")
+                    self._model = _load_cached_first(CrossEncoder, self.name)
                 except Exception as e:  # offline, disk, etc. — degrade gracefully
                     log.warning("Reranker unavailable (%s); using hybrid scores only", e)
                     self._failed = True

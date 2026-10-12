@@ -28,7 +28,7 @@ class Settings(BaseSettings):
 
     # ── Provider routing ────────────────────────────────────────────────
     # Comma-separated, tried in order. A provider is skipped automatically
-    # when it has no key (or, for Ollama, when OLLAMA_ENABLED is false).
+    # when it has no key (or, for Ollama / LM Studio, when *_ENABLED is false).
     LLM_PROVIDER_ORDER: str = "gemini,groq,openrouter,ollama"
 
     # Google Gemini — free key: https://aistudio.google.com/apikey
@@ -63,6 +63,13 @@ class Settings(BaseSettings):
     OLLAMA_NUM_CTX: int = 4096           # context window; bigger = slower on CPU
     OLLAMA_THINK: bool = False
     OLLAMA_MAX_TOKENS: int = 700         # cap per reply — CPU generation is slow           # reasoning mode for qwen3/deepseek-r1 (slower, uses more tokens)
+
+    # LM Studio — local, no key: start the server in LM Studio (Developer tab)
+    # or with `lms server start`. Model names come from `lms ls` / GET /v1/models.
+    LMSTUDIO_ENABLED: bool = False
+    LMSTUDIO_BASE_URL: str = "http://localhost:1234/v1"
+    LMSTUDIO_MODEL: str = "meta-llama-3.1-8b-instruct"
+    LMSTUDIO_FAST_MODEL: str = ""        # empty = same as LMSTUDIO_MODEL
 
     # ── LLM call behaviour ──────────────────────────────────────────────
     LLM_TIMEOUT_SECS: float = 90.0

@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -125,19 +126,26 @@ class Engine:
             top_k = opts.top_k or s.TOP_K
             hits: List[Hit] = await asyncio.to_thread(
                 self.kb.search, question, top_k, s.CANDIDATE_POOL, opts.doc_ids)
-            timer.stop("retrieve")
-            sources = [h.to_dict(i) for i, h in enumerate(hits, start=1)]
             best = max((h.relevance for h in hits), default=0.0)
-            stage("retrieve", "done", summary=f"{len(hits)} passages · best relevance {best:.0%}",
-                  sources=sources)
-
-            # ── 2. Answer ──────────────────────────────────────────────
-            answer: Optional[AnswerResult] = None
             # With a reranker, relevance is a real probability: if every passage is
             # near zero, the library doesn't cover the question — decline instantly
             # instead of spending (slow, rate-limited) model calls on it.
             reranked = bool(hits) and all(h.rerank is not None for h in hits)
             off_topic = reranked and best < s.MIN_RELEVANCE
+            overview = False
+            if (not hits or off_topic) and is_overview_question(question):
+                # "What is this file about?" matches no single passage; answer from
+                # the opening passages (title, abstract, introduction) instead.
+                hits = self.kb.overview_hits(top_k, opts.doc_ids)
+                overview, off_topic = bool(hits), False
+            timer.stop("retrieve")
+            sources = [h.to_dict(i) for i, h in enumerate(hits, start=1)]
+            summary = (f"{len(hits)} opening passages · document overview" if overview
+                       else f"{len(hits)} passages · best relevance {best:.0%}")
+            stage("retrieve", "done", summary=summary, sources=sources)
+
+            # ── 2. Answer ──────────────────────────────────────────────
+            answer: Optional[AnswerResult] = None
             skip_llm = not hits or off_topic
             if skip_llm:
                 why = ("Nothing in your library matched the question." if not hits else
@@ -170,7 +178,7 @@ class Engine:
             verification: Optional[VerificationResult] = None
             consistency: Optional[ConsistencyResult] = None
             reflection: Optional[ReflectionResult] = None
-            has_claims = not skip_llm and not (answer.abstained and not answer.citations)
+            has_claims = not skip_llm and not answer.abstained
 
             async def do_verify():
                 nonlocal verification
@@ -271,6 +279,19 @@ class Engine:
                     log.exception("Could not save run history")
             recorder("complete", {"result": result})
             return result
+
+
+_OVERVIEW_RE = re.compile(
+    r"\b(this|the|that|my|uploaded|attached)\s+(file|document|doc|paper|pdf|report|article)s?\b"
+    r"|\b(summar(y|ise|ize)|overview|outline|gist)\b"
+    r"|\bmain\s+(idea|ideas|point|points|topic|topics|contribution|contributions)\b"
+    r"|\bwhat\s+(is|are)\s+(it|this|they)\s+about\b",
+    re.IGNORECASE)
+
+
+def is_overview_question(question: str) -> bool:
+    """True for questions about a document as a whole rather than a specific fact."""
+    return bool(_OVERVIEW_RE.search(question or ""))
 
 
 class PipelineError(Exception):

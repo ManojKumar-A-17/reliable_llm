@@ -110,7 +110,7 @@ class LLMRouter:
         if not self.providers:
             raise LLMError(NO_PROVIDER,
                            "No LLM provider is configured. Add GEMINI_API_KEY or GROQ_API_KEY "
-                           "(or enable Ollama) in backend/.env and restart the server.")
+                           "(or enable Ollama / LM Studio) in backend/.env and restart the server.")
 
         errors: List[str] = []
         # Prefer providers that are not cooling down, but keep order otherwise.
